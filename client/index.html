@@ -882,14 +882,22 @@
             } finally { showLoading(false); }
         }
 
-        // 5. BUY ITEM
+                // 5. BUY ITEM (Đã sửa lỗi logic)
         async function buyNFT(tokenId, priceEth) {
             try {
+                // Kiểm tra xem đã kết nối ví chưa, nếu chưa thì bắt kết nối lại
+                if (!contract || !signer) {
+                    await connectWallet();
+                    // Nếu sau khi connect mà vẫn lỗi thì dừng
+                    if (!contract) return alert("Vui lòng kết nối ví trước khi mua!");
+                }
+
                 showLoading(true, "Processing purchase...");
                 const priceInWei = ethers.utils.parseEther(priceEth.toString());
 
                 // Chain transaction
-                const tx = await contract.buyAsset(tokenId, { value: priceInWei });
+                // Gọi contract với signer để đảm bảo giao dịch được ký
+                const tx = await contract.connect(signer).buyAsset(tokenId, { value: priceInWei });
                 await tx.wait();
 
                 // Backend Update
@@ -901,7 +909,8 @@
                 alert("Purchase successful! Check 'My Collection'.");
                 loadMarketplace();
             } catch (err) {
-                alert("Transaction Failed: " + err.message);
+                console.error(err); // In lỗi ra console để dễ debug
+                alert("Transaction Failed: " + (err.reason || err.message));
             } finally { showLoading(false); }
         }
 
@@ -909,6 +918,17 @@
             document.getElementById("loading").style.display = show ? "block" : "none";
             if(text) document.getElementById("loadingText").innerText = text;
         }
+        // Tự động chạy khi trang web tải xong
+      window.addEventListener('DOMContentLoaded', () => {
+          // 1. Load dữ liệu chợ ngay lập tức (không cần chờ kết nối ví)
+          loadMarketplace();
+
+          // 2. (Nâng cao) Tự động kiểm tra xem user đã kết nối ví trước đó chưa
+          // Nếu trước đó đã kết nối, thì tự động kết nối lại luôn cho tiện
+          if(window.ethereum && window.ethereum.selectedAddress) {
+              connectWallet();
+          }
+      });
     </script>
 </body>
 </html>
