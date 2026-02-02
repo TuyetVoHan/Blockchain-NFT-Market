@@ -889,7 +889,7 @@
                 if (!contract || !signer) {
                     await connectWallet();
                     // Nếu sau khi connect mà vẫn lỗi thì dừng
-                    if (!contract) return alert("Vui lòng kết nối ví trước khi mua!");
+                    if (!contract) return;
                 }
 
                 showLoading(true, "Processing purchase...");
